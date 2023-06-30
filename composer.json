@@ -1,0 +1,16 @@
+{
+    "name": "itransition/eiu-ll-integration",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "EIU\\LLIntegration\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Itransition"
+        }
+    ]
+}
