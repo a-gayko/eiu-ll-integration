@@ -4,22 +4,44 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+
 class Account
 {
     private Client $client;
+    private LoggerInterface $log;
     private Request $request;
 
     public function __construct($request)
     {
         $this->client = new Client();
+        $this->log = new NullLogger();
         $this->request = $request;
     }
 
-    public function createAccount(): string
+    public function createAccount(): Account|null
     {
-        $response = $this->client->apiPOST('@accounts', $this->accountData());
+        $payload = $this->accountData();
+        $response = $this->client->apiPOST('@accounts', $payload);
+        if (!isset($response->id)) {
+            //failed
+            $this->log->critical('Account request failed {payload}', ['payload' => $payload]);
+            return null;
+        }
 
-        return $response;
+        $account = new Account($response);
+        $this->log->info(
+            'Account request for account_name {account_name}  succeeded type={type} publisher_reference={publisher_reference} id={id}',
+            [
+                'type' => $account->type,
+                'id' => $account->id,
+                'account_name' => $account->account_name,
+                'publisher_reference' => $account->publisher_reference,
+            ]
+        );
+
+        return $account;
     }
 
     public function accountData(): string

@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+
 class Identification
 
 {
     public string $status;
     public array $unit_requests;
     private Client $client;
+    private LoggerInterface $log;
     private Request $request;
 
     public function __construct($request)
     {
         $this->client = new Client();
+        $this->log = new NullLogger();
         $this->request = $request;
     }
 
@@ -23,17 +28,26 @@ class Identification
      * Authorize given authentication object
      * @return Identification|null
      */
-    public function authenticate(): Identification
+    public function authenticate(): Identification|null
     {
-        $identification = null;
-
-        $response = $this->client->apiPOST('@new_identification', $this->request->getRequestData());
-        if (isset($response->id)) {
-            $identification = self::fromJSON($response);
-        } else {
-            //failed to authenticate
-            //Redirect to REGISTER_PAGE
+        $payload = $this->request->getRequestData();
+        $response = $this->client->apiPOST('@new_identification', $payload);
+        if (!isset($response->id)) {
+            //failed
+            $this->log->critical('Identification request failed {payload}', ['payload' => $payload]);
+            return null;
         }
+
+        $identification = new Identification($response);
+        $this->log->info(
+            'Identification request for ip {ip} on URL {url} succeeded status={status} id={id}',
+            [
+                'status' => $identification->status,
+                'id' => $identification->id,
+                'ip' => $identification->ip,
+                'url' => $identification->url,
+            ]
+        );
 
         return $identification;
     }
