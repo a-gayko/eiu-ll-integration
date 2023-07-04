@@ -2,18 +2,20 @@
 
 declare(strict_types=1);
 
-namespace EIU\LLIntegration\Identification;
+namespace EIU\LLIntegration;
 
 class Identification
 
 {
     public string $status;
     public array $unit_requests;
-    private IdentificationRequest $requestFromIdentForm;
+    private Client $client;
+    private Request $request;
 
-    public function __construct($requestFromIdentForm)
+    public function __construct($request)
     {
-        $this->requestFromIdentForm = $requestFromIdentForm;
+        $this->client = new Client();
+        $this->request = $request;
     }
 
 
@@ -25,7 +27,7 @@ class Identification
     {
         $identification = null;
 
-        $response = $this->client->apiPOST('@new_identification', $this->requestFromIdentForm->getRequestData());
+        $response = $this->client->apiPOST('@new_identification', $this->request->getRequestData());
         if (isset($response->id)) {
             $identification = self::fromJSON($response);
         } else {

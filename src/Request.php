@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace EIU\LLIntegration\Identification;
+namespace EIU\LLIntegration;
 
-class IdentificationRequest
+class Request
 {
     public string $url;
     public string $referrer;
@@ -14,7 +14,7 @@ class IdentificationRequest
 
     public static function fromRequest()
     {
-        $id = new IdentificationRequest();
+        $id = new Request();
         if (isset($_SERVER['REMOTE_ADDR'])) {
             $id->ip = $_SERVER['REMOTE_ADDR'];
         }

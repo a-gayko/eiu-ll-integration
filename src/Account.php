@@ -4,21 +4,28 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration;
 
-use EIU\LLIntegration\Registration\RegistrationRequest;
-
 class Account
 {
-    private RegistrationRequest $registrationRequest;
+    private Client $client;
+    private Request $request;
 
-    public function __construct($registrationRequest)
+    public function __construct($request)
     {
-        $this->registrationRequest = $registrationRequest;
+        $this->client = new Client();
+        $this->request = $request;
     }
 
-    public function setAccountData(): string
+    public function createAccount(): string
+    {
+        $response = $this->client->apiPOST('@accounts', $this->accountData());
+
+        return $response;
+    }
+
+    public function accountData(): string
     {
         $data = [
-            "account_name" => $this->registrationRequest->getUserName(),
+            "account_name" => $this->getUserName(),
             "enable_ip"=> true,
             "enable_pass_code"=> true,
             "enable_referrer"=> true,
@@ -41,5 +48,12 @@ class Account
         ];
 
         return json_encode($data);
+    }
+
+    private function getUserName(): string
+    {
+        $userName = $this->request->getRequestData()>individual->display_name;
+
+        return json_encode($userName);
     }
 }
