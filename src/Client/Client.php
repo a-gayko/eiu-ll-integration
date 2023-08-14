@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
-namespace EIU\LLIntegration;
+namespace EIU\LLIntegration\Client;
 
+/**
+ *
+ */
 class Client
 {
-    const TRANSIENT_TOKEN = 'liblynx_token';
-    const TRANSIENT_ENTRYPOINT = 'liblynx_entrypoint';
+    public const TRANSIENT_TOKEN = 'liblynx_token';
+    public const TRANSIENT_ENTRYPOINT = 'liblynx_entrypoint';
     protected string $apiroot;
 
     public function __construct()
@@ -20,8 +23,8 @@ class Client
      */
     protected function newToken()
     {
-        $url = $this->apiroot.'/oauth/v2/token';
-        $authHdr = "Basic ".base64_encode(LIBLYNX_CLIENT_KEY . ':' . LIBLYNX_CLIENT_SECRET);
+        $url = $this->apiroot . '/oauth/v2/token';
+        $authHeader = 'Basic ' . base64_encode(LIBLYNX_CLIENT_KEY . ':' . LIBLYNX_CLIENT_SECRET);
 
         $response = wp_remote_post(
             $url,
@@ -29,14 +32,12 @@ class Client
                 'method'   => 'POST',
                 'timeout'  => 15,
                 'blocking' => true,
-                'headers'  => array('Authorization' => $authHdr),
+                'headers'  => array('Authorization' => $authHeader),
                 'body'     => array('grant_type' => 'client_credentials'),
             )
         );
         if (isset($response['response']['code']) && ($response['response']['code'] == 200)) {
-            $token = json_decode($response['body']);
-
-            return $token;
+            return json_decode($response['body']);
         }
 
         //failed
@@ -86,7 +87,7 @@ class Client
     protected function callAPI($url, $method = 'GET', $jsonBody = null)
     {
         $token = $this->getToken();
-        $authHdr = "Bearer ".$token;
+        $authHdr = "Bearer " . $token;
 
         //tranform the $url if shorthand
         $url = $this->transformUrl($url);
@@ -118,9 +119,11 @@ class Client
             return null;
         }
 
-        if (isset($response['response']['code']) &&
-            ($response['response']['code'] >= 200) &&
-            ($response['response']['code'] < 300)) {
+        if (
+            isset($response['response']['code'])
+            && ($response['response']['code'] >= 200)
+            && ($response['response']['code'] < 300)
+        ) {
             $data = json_decode($response['body']);
 
             return $data;
@@ -152,7 +155,7 @@ class Client
             return json_decode($json);
         }
 
-        $url = $this->apiroot.'/api';
+        $url = $this->apiroot . '/api';
         $entrypoint = $this->apiGET($url);
         if ($entrypoint) {
             set_transient(self::TRANSIENT_ENTRYPOINT, json_encode($entrypoint), 86400);

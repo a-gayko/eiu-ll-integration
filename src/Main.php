@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace EIU\LLIntegration;
+
 class Main
 {
     private string $name;
