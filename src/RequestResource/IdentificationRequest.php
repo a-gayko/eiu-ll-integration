@@ -7,10 +7,14 @@ namespace EIU\LLIntegration\RequestResource;
 use EIU\LLIntegration\Resource\Identification;
 use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 
+/**
+ * Class IdentificationRequest
+ * @package EIU\LLIntegration\RequestResource
+ */
 class IdentificationRequest extends AbstractApiRequest
 {
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getRequestDataJSON(): string
     {
@@ -26,7 +30,7 @@ class IdentificationRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getApiEndpoint(): string
     {
@@ -34,7 +38,7 @@ class IdentificationRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getLogMessage(): string
     {
@@ -42,16 +46,15 @@ class IdentificationRequest extends AbstractApiRequest
     }
 
     /**
-     * @param $response
-     * @return ApiResourceInterface
+     * {@inheritdoc}
      */
-    protected function createResource($response): ApiResourceInterface
+    protected function createResource(mixed $response): ApiResourceInterface
     {
         return new Identification($response);
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getSuccessLogMessage(): string
     {
@@ -59,8 +62,7 @@ class IdentificationRequest extends AbstractApiRequest
     }
 
     /**
-     * @param ApiResourceInterface $resource
-     * @return array
+     * {@inheritdoc}
      */
     protected function getSuccessLogContext(ApiResourceInterface $resource): array
     {

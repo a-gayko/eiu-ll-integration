@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration\RequestResource;
 
-use EIU\LLIntegration\Interface\ApiRequestInterface;
 use EIU\LLIntegration\Resource\Account;
 use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 
 /**
- *
+ * Class AccountRequest
+ * @package EIU\LLIntegration\RequestResource
  */
 class AccountRequest extends AbstractApiRequest
 {
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getRequestDataJSON(): string
     {
@@ -30,7 +30,7 @@ class AccountRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getApiEndpoint(): string
     {
@@ -38,7 +38,7 @@ class AccountRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getLogMessage(): string
     {
@@ -46,16 +46,15 @@ class AccountRequest extends AbstractApiRequest
     }
 
     /**
-     * @param $response
-     * @return ApiResourceInterface
+     * {@inheritdoc}
      */
-    protected function createResource($response): ApiResourceInterface
+    protected function createResource(mixed $response): ApiResourceInterface
     {
         return new Account($response);
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getSuccessLogMessage(): string
     {
@@ -63,8 +62,7 @@ class AccountRequest extends AbstractApiRequest
     }
 
     /**
-     * @param ApiResourceInterface $resource
-     * @return array
+     * {@inheritdoc}
      */
     protected function getSuccessLogContext(ApiResourceInterface $resource): array
     {
@@ -73,5 +71,4 @@ class AccountRequest extends AbstractApiRequest
             'account_name' => $resource->account_name,
         ];
     }
-
 }

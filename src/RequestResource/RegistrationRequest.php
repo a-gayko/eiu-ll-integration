@@ -8,12 +8,13 @@ use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 use EIU\LLIntegration\Resource\Registration;
 
 /**
- *
+ * Class RegistrationRequest
+ * @package EIU\LLIntegration\RequestResource
  */
 class RegistrationRequest extends AbstractApiRequest
 {
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getRequestDataJSON(): string
     {
@@ -35,7 +36,7 @@ class RegistrationRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getApiEndpoint(): string
     {
@@ -43,7 +44,7 @@ class RegistrationRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getLogMessage(): string
     {
@@ -51,16 +52,15 @@ class RegistrationRequest extends AbstractApiRequest
     }
 
     /**
-     * @param $response
-     * @return ApiResourceInterface
+     * {@inheritdoc}
      */
-    protected function createResource($response): ApiResourceInterface
+    protected function createResource(mixed $response): ApiResourceInterface
     {
         return new Registration($response);
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getSuccessLogMessage(): string
     {
@@ -68,8 +68,7 @@ class RegistrationRequest extends AbstractApiRequest
     }
 
     /**
-     * @param ApiResourceInterface $resource
-     * @return array
+     * {@inheritdoc}
      */
     protected function getSuccessLogContext(ApiResourceInterface $resource): array
     {

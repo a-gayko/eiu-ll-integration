@@ -7,10 +7,14 @@ namespace EIU\LLIntegration\RequestResource;
 use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 use EIU\LLIntegration\Resource\Subscription;
 
+/**
+ * Class SubscriptionRequest
+ * @package EIU\LLIntegration\RequestResource
+ */
 class SubscriptionRequest extends AbstractApiRequest
 {
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getRequestDataJSON(): string
     {
@@ -27,7 +31,7 @@ class SubscriptionRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getApiEndpoint(): string
     {
@@ -35,7 +39,7 @@ class SubscriptionRequest extends AbstractApiRequest
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getLogMessage(): string
     {
@@ -43,16 +47,15 @@ class SubscriptionRequest extends AbstractApiRequest
     }
 
     /**
-     * @param $response
-     * @return ApiResourceInterface
+     * {@inheritdoc}
      */
-    protected function createResource($response): ApiResourceInterface
+    protected function createResource(mixed $response): ApiResourceInterface
     {
         return new Subscription($response);
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     protected function getSuccessLogMessage(): string
     {
@@ -60,8 +63,7 @@ class SubscriptionRequest extends AbstractApiRequest
     }
 
     /**
-     * @param ApiResourceInterface $resource
-     * @return array
+     * {@inheritdoc}
      */
     protected function getSuccessLogContext(ApiResourceInterface $resource): array
     {
@@ -69,5 +71,4 @@ class SubscriptionRequest extends AbstractApiRequest
             'id' => $resource->id,
         ];
     }
-
 }
