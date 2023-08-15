@@ -26,32 +26,50 @@ class IdentificationRequest extends AbstractApiRequest
     }
 
     /**
-     * Authorize given authentication object
-     * @return IdentificationRequest|null
+     * @return string
      */
-    public function sendRequest(): ?ApiResourceInterface
+    protected function getApiEndpoint(): string
     {
-        $payload = $this->getRequestDataJSON();
-        $response = $this->client->apiPOST('@new_identification', $payload);
-        if (!isset($response->id)) {
-            //failed
-            $this->log->critical('Identification request failed {payload}', ['payload' => $payload]);
+        return '@new_identification';
+    }
 
-            return null;
-        }
+    /**
+     * @return string
+     */
+    protected function getLogMessage(): string
+    {
+        return 'Identification request failed {payload}';
+    }
 
-        $identification = new Identification($response);
-        $this->log->info(
-            'Identification request for ip {ip} on URL {url} succeeded status={status} id={id}',
-            [
-                'status' => $identification->status,
-                'id'     => $identification->id,
-                'ip'     => $identification->ip,
-                'url'    => $identification->url,
-            ]
-        );
+    /**
+     * @param $response
+     * @return ApiResourceInterface
+     */
+    protected function createResource($response): ApiResourceInterface
+    {
+        return new Identification($response);
+    }
 
-        return $identification;
+    /**
+     * @return string
+     */
+    protected function getSuccessLogMessage(): string
+    {
+        return 'Identification request for ip {ip} on URL {url} succeeded status={status} id={id}';
+    }
+
+    /**
+     * @param ApiResourceInterface $resource
+     * @return array
+     */
+    protected function getSuccessLogContext(ApiResourceInterface $resource): array
+    {
+        return [
+            'status' => $resource->status,
+            'id'     => $resource->id,
+            'ip'     => $resource->ip,
+            'url'    => $resource->url,
+        ];
     }
 
     /**

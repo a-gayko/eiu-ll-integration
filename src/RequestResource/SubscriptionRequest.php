@@ -7,9 +7,6 @@ namespace EIU\LLIntegration\RequestResource;
 use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 use EIU\LLIntegration\Resource\Subscription;
 
-/**
- *
- */
 class SubscriptionRequest extends AbstractApiRequest
 {
     /**
@@ -30,27 +27,47 @@ class SubscriptionRequest extends AbstractApiRequest
     }
 
     /**
-     * @return ApiResourceInterface|null
+     * @return string
      */
-    public function sendRequest(): ?ApiResourceInterface
+    protected function getApiEndpoint(): string
     {
-        $payload = $this->getRequestDataJSON();
-        $response = $this->client->apiPOST('@account_subs', $payload);
-        if (!isset($response->id)) {
-            //failed
-            $this->log->critical('Subscription request failed {payload}', ['payload' => $payload]);
-
-            return null;
-        }
-
-        $subscription = new Subscription($response);
-        $this->log->info(
-            'Subscription request for id {id} succeeded',
-            [
-                'id' => $subscription->id,
-            ]
-        );
-
-        return $subscription;
+        return '@account_subs';
     }
+
+    /**
+     * @return string
+     */
+    protected function getLogMessage(): string
+    {
+        return 'Subscription request failed {payload}';
+    }
+
+    /**
+     * @param $response
+     * @return ApiResourceInterface
+     */
+    protected function createResource($response): ApiResourceInterface
+    {
+        return new Subscription($response);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getSuccessLogMessage(): string
+    {
+        return 'Subscription request for id {id} succeeded';
+    }
+
+    /**
+     * @param ApiResourceInterface $resource
+     * @return array
+     */
+    protected function getSuccessLogContext(ApiResourceInterface $resource): array
+    {
+        return [
+            'id' => $resource->id,
+        ];
+    }
+
 }

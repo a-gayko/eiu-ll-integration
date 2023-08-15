@@ -35,27 +35,46 @@ class RegistrationRequest extends AbstractApiRequest
     }
 
     /**
-     * @return ApiResourceInterface|null
+     * @return string
      */
-    public function sendRequest(): ?ApiResourceInterface
+    protected function getApiEndpoint(): string
     {
-        $payload = $this->getRequestDataJSON();
-        $response = $this->client->apiPOST('@account_individuals', $payload);
-        if (!isset($response->id)) {
-            //failed
-            $this->log->critical('Registration request failed {payload}', ['payload' => $payload]);
+        return '@account_individuals';
+    }
 
-            return null;
-        }
+    /**
+     * @return string
+     */
+    protected function getLogMessage(): string
+    {
+        return 'Registration request failed {payload}';
+    }
 
-        $registration = new Registration($response);
-        $this->log->info(
-            'Registration request for id {id}  succeeded',
-            [
-                'id' => $registration->id,
-            ]
-        );
+    /**
+     * @param $response
+     * @return ApiResourceInterface
+     */
+    protected function createResource($response): ApiResourceInterface
+    {
+        return new Registration($response);
+    }
 
-        return $registration;
+    /**
+     * @return string
+     */
+    protected function getSuccessLogMessage(): string
+    {
+        return 'Registration request for id {id} succeeded';
+    }
+
+    /**
+     * @param ApiResourceInterface $resource
+     * @return array
+     */
+    protected function getSuccessLogContext(ApiResourceInterface $resource): array
+    {
+        return [
+            'id' => $resource->id,
+        ];
     }
 }
