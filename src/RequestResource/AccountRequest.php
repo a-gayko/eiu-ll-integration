@@ -19,11 +19,12 @@ class AccountRequest extends AbstractApiRequest
     public function getRequestDataJSON(): string
     {
         $data = [
-            'account_name'      => $_POST['llacc_name'],
-            'enable_ip'         => true,
-            'enable_pass_code'  => true,
-            'enable_referrer'   => true,
-            'enable_individual' => true,
+            'account_name'        => $_POST['llacc_name'],
+            'publisher_reference' => '',
+            'enable_ip'           => true,
+            'enable_pass_code'    => true,
+            'enable_referrer'     => true,
+            'enable_individual'   => true,
         ];
 
         return json_encode($data);

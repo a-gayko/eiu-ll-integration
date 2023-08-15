@@ -3,7 +3,7 @@
 namespace EIU\LLIntegration\RequestResource;
 
 use EIU\LLIntegration\Client\Client;
-use EIU\LLIntegration\Interface\ApiRequestInterface;
+use EIU\LLIntegration\RequestResource\Interface\ApiRequestInterface;
 use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

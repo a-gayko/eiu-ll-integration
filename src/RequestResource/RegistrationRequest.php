@@ -64,7 +64,7 @@ class RegistrationRequest extends AbstractApiRequest
      */
     protected function getSuccessLogMessage(): string
     {
-        return 'Registration request for id {id} succeeded';
+        return 'Registration request for display_name {display_name} succeeded id={id} type={type}';
     }
 
     /**
@@ -74,6 +74,8 @@ class RegistrationRequest extends AbstractApiRequest
     {
         return [
             'id' => $resource->id,
+            'type' => $resource->type,
+            'individual' => $resource->individual->display_name,
         ];
     }
 }

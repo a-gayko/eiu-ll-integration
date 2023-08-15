@@ -59,7 +59,7 @@ class SubscriptionRequest extends AbstractApiRequest
      */
     protected function getSuccessLogMessage(): string
     {
-        return 'Subscription request for id {id} succeeded';
+        return 'Subscription request for title {title} succeeded id={id} package_code={package_code}';
     }
 
     /**
@@ -69,6 +69,8 @@ class SubscriptionRequest extends AbstractApiRequest
     {
         return [
             'id' => $resource->id,
+            'title' => $resource->title,
+            'package_code' => $resource->package_code,
         ];
     }
 }

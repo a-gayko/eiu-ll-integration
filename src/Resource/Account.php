@@ -12,21 +12,17 @@ use stdClass;
  *
  * @property stdClass $id
  * @property stdClass $account_name
+ * @property stdClass $active
  */
 class Account extends AbstractApiResource
 {
-    public function isIdentified(): bool
+    /**
+     * Get the status of the subscription.
+     *
+     * @return stdClass Status of the subscription.
+     */
+    public function getStatus(): stdClass
     {
-        return $this->status == 'identified';
-    }
-
-    public function requiresWayf(): bool
-    {
-        return $this->status == 'wayf';
-    }
-
-    public function getWayfUrl(): string
-    {
-        return $this->getLink('wayf');
+        return $this->active;
     }
 }

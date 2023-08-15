@@ -11,21 +11,19 @@ use stdClass;
  * @package EIU\LLIntegration
  *
  * @property stdClass $id
+ * @property stdClass $title
+ * @property stdClass $package_code
+ * @property stdClass $active
  */
 class Subscription extends AbstractApiResource
 {
-    public function isIdentified(): bool
+    /**
+     * Get the status of the subscription.
+     *
+     * @return stdClass Status of the subscription.
+     */
+    public function getStatus(): stdClass
     {
-        return $this->status == 'identified';
-    }
-
-    public function requiresWayf(): bool
-    {
-        return $this->status == 'wayf';
-    }
-
-    public function getWayfUrl(): string
-    {
-        return $this->getLink('wayf');
+        return $this->active;
     }
 }
