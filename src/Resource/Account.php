@@ -18,9 +18,9 @@ use stdClass;
 class Account extends AbstractApiResource
 {
     /**
-     * Get the status of the subscription.
+     * Get the status of the account.
      *
-     * @return bool|string Status of the subscription.
+     * @return bool|string Status of the account.
      */
     public function getStatus(): bool | string
     {

@@ -4,173 +4,255 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration\Client;
 
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request;
+use LogicException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Psr\SimpleCache\CacheInterface;
+use RuntimeException;
+
 /**
+ * LibLynx Integration API client
  *
+ * @package EIU\LLIntegration
  */
-class Client
+class Client implements LoggerAwareInterface
 {
-    public const TRANSIENT_TOKEN = 'liblynx_token';
+    private string $apiRoot = 'https://connect.liblynx.com';
 
-    public const TRANSIENT_ENTRYPOINT = 'liblynx_entrypoint';
+    /** @var string client ID obtain from LibLynx Connect admin portal */
+    private string $clientId;
 
-    protected string $apiroot;
+    /** @var string client secret obtain from LibLynx Connect admin portal */
+    private string $clientSecret;
 
-    public function __construct()
+    /** @var ClientInterface HTTP client for API requests */
+    private ClientInterface $guzzle;
+
+    /** @var \stdClass entry point resource */
+    private \stdClass $entrypoint;
+
+    /** @var CacheInterface */
+    protected CacheInterface $cache;
+
+    /** @var LoggerInterface */
+    protected LoggerInterface $log;
+
+    /** @var HTTPClientFactory */
+    protected HTTPClientFactory $httpClientFactory;
+
+    /**
+     * Create new LibLynx Integration API client
+     */
+    public function __construct(HTTPClientFactory $clientFactory = null)
     {
-        $this->apiroot = 'http://connect.liblynx.com';
+        if (defined(LIBLYNX_CLIENT_KEY)) {
+            $this->clientId = LIBLYNX_CLIENT_KEY;
+        }
+        if (defined(LIBLYNX_CLIENT_SECRET)) {
+            $this->clientSecret = LIBLYNX_CLIENT_SECRET;
+        }
+
+        $this->log               = new NullLogger();
+        $this->httpClientFactory = $clientFactory ?? new HTTPClientFactory();
     }
 
     /**
-     * request new token
+     * @inheritdoc
      */
-    protected function newToken()
+    public function setLogger(LoggerInterface $logger): void
     {
-        $url        = $this->apiroot . '/oauth/v2/token';
-        $authHeader = 'Basic ' . base64_encode(LIBLYNX_CLIENT_KEY . ':' . LIBLYNX_CLIENT_SECRET);
+        $this->log = $logger;
+    }
 
-        $response = wp_remote_post(
-            $url,
-            [
-                'method'   => 'POST',
-                'timeout'  => 15,
-                'blocking' => true,
-                'headers'  => ['Authorization' => $authHeader],
-                'body'     => ['grant_type' => 'client_credentials'],
-            ]
+    /**
+     * General purpose 'GET' request against API
+     *
+     * @param string $entrypoint contains either an @entrypoint or full URL
+     *     obtained from a resource
+     *
+     * @return mixed
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    public function apiGET(string $entrypoint): mixed
+    {
+        return $this->makeAPIRequest('GET', $entrypoint);
+    }
+
+    /**
+     * General purpose 'POST' request against API
+     *
+     * @param string $entrypoint contains either an @entrypoint or full URL
+     *     obtained from a resource
+     * @param string $json contains JSON formatted data to post
+     *
+     * @return \stdClass|string
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    public function apiPOST(string $entrypoint, string $json): string | \stdClass
+    {
+        return $this->makeAPIRequest('POST', $entrypoint, $json);
+    }
+
+    /**
+     * @param $method
+     * @param $entrypoint
+     * @param null $json
+     *
+     * @return string object containing JSON decoded response - note this
+     *     can be an error response for normally handled errors
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    protected function makeAPIRequest(
+        $method,
+        $entrypoint,
+        $json = null
+    ): string {
+        $this->log->debug(
+            '{method} {entry} {json}',
+            ['method' => $method, 'entry' => $entrypoint, 'json' => $json]
         );
-        if (isset($response['response']['code']) && ($response['response']['code'] == 200)) {
-            return json_decode($response['body']);
-        }
+        $url    = $this->resolveEntryPoint($entrypoint);
+        $client = $this->getClient();
 
-        //failed
-        return null;
-    }
-
-    /**
-     * Obtain OAuth token from Wordpress transient, fetching
-     * a new one if its expired
-     */
-    public function getToken()
-    {
-        $token = get_transient(self::TRANSIENT_TOKEN, null);
-        if (!empty($token)) {
-            return $token;
-        }
-
-        $oauth = $this->newToken();
-        if ($oauth) {
-            set_transient(
-                self::TRANSIENT_TOKEN,
-                $oauth->access_token,
-                $oauth->expires_in - 60
-            );
-            $token = $oauth->access_token;
-        }
-
-        return $token;
-    }
-
-    /**
-     * URLs are discovered through the entrypoint resource, so code can
-     * make calls to @new_identification and we'll figure out what URL to
-     * to use. If the url doesn't start with @, then its returned unchanged
-     */
-    protected function transformUrl($url)
-    {
-        if ($url[0] == '@') {
-            $entrypoint = $this->getEntrypoint();
-            if (isset($entrypoint->_links->$url)) {
-                $url = $entrypoint->_links->$url->href;
-            }
-        }
-
-        return $url;
-    }
-
-    /**
-     * Make OAuth secured API call
-     */
-    protected function callAPI($url, $method = 'GET', $jsonBody = null)
-    {
-        $token   = $this->getToken();
-        $authHdr = "Bearer " . $token;
-
-        //tranform the $url if shorthand
-        $url = $this->transformUrl($url);
-
-        $params = [
-            'method'   => $method,
-            'timeout'  => 15,
-            'blocking' => true,
-            'headers'  => [
-                'Authorization' => $authHdr,
-                'Accept'        => 'application/json',
-            ],
-        ];
-        if (!is_null($jsonBody)) {
-            $params['body']                    = $jsonBody;
-            $params['headers']['Content-Type'] = 'application/json';
-        }
-
-        $response = wp_remote_post($url, $params);
-        if (is_wp_error($response)) {
-            $msg = sprintf(
-                'request for %s with args %s failed: errors=%s',
-                $url,
-                print_r($params, true),
-                print_r($response->get_error_messages(), true)
-            );
-            error_log($msg);
-
-            return null;
-        }
-
-        if (
-            isset($response['response']['code'])
-            && ($response['response']['code'] >= 200)
-            && ($response['response']['code'] < 300)
-        ) {
-            $data = json_decode($response['body']);
-
-            return $data;
-        }
-
-        return null;
-    }
-
-    /**
-     * Shorthand method for API GET
-     */
-    protected function apiGET($url)
-    {
-        return $this->callAPI($url, 'GET');
-    }
-
-    /**
-     * Shorthand method for API POST
-     */
-    public function apiPOST($url, $jsonBody)
-    {
-        return $this->callAPI($url, 'POST', $jsonBody);
-    }
-
-    public function getEntryPoint()
-    {
-        $json = get_transient(self::TRANSIENT_ENTRYPOINT);
+        $headers = ['Accept' => 'application/json'];
         if (!empty($json)) {
-            return json_decode($json);
+            $headers['Content-Type'] = 'application/json';
         }
 
-        $url        = $this->apiroot . '/api';
-        $entrypoint = $this->apiGET($url);
-        if ($entrypoint) {
-            set_transient(
-                self::TRANSIENT_ENTRYPOINT,
-                json_encode($entrypoint),
-                86400
+        $request = new Request($method, $url, $headers, $json);
+
+        try {
+            $response = $client->send($request);
+            $this->log->debug(
+                '{method} {entry} succeeded {status}',
+                [
+                    'method' => $method,
+                    'entry'  => $entrypoint,
+                    'status' => $response->getStatusCode(),
+                ]
+            );
+        } catch (RequestException $e) {
+            //we usually have a response available, but it's not guaranteed
+            $response = $e->getResponse();
+            $this->log->error(
+                '{method} {entrypoint} {json} failed ({status}): {body}',
+                [
+                    'method'     => $method,
+                    'json'       => $json,
+                    'entrypoint' => $entrypoint,
+                    'status'     => $response ? $response->getStatusCode() : 0,
+                    'body'       => $response ? $response->getBody() : '',
+                ]
+            );
+
+            throw new RuntimeException(
+                "$method $entrypoint request failed",
+                $e->getCode(),
+                $e
+            );
+        } catch (GuzzleException $e) {
+            $this->log->critical(
+                '{method} {entry} {json} failed',
+                ['method' => $method, 'json' => $json, 'entry' => $entrypoint]
+            );
+
+            throw new RuntimeException("$method $entrypoint failed", 0, $e);
+        }
+
+        return json_decode($response->getBody());
+    }
+
+    /**
+     * @param $nameOrUrl
+     *
+     * @return mixed
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    public function resolveEntryPoint($nameOrUrl): mixed
+    {
+        if ($nameOrUrl[0] === '@') {
+            $resolved = $this->getEntryPoint($nameOrUrl);
+            $this->log->debug(
+                'Entrypoint {entrypoint} resolves to {url}',
+                ['entrypoint' => $nameOrUrl, 'url' => $resolved]
+            );
+
+            return $resolved;
+        }
+
+        return $nameOrUrl;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return mixed
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    public function getEntryPoint($name): mixed
+    {
+        if (!is_array($this->entrypoint)) {
+            $this->entrypoint = $this->getEntrypointResource();
+        } else {
+            $this->log->debug('using previously loaded entrypoint');
+        }
+
+        if (!isset($this->entrypoint->_links->$name->href)) {
+            throw new LogicException("Invalid LibLynx Integration API entrypoint $name requested");
+        }
+
+        return $this->entrypoint->_links->$name->href;
+    }
+
+    /**
+     * @return mixed
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    protected function getEntrypointResource(): mixed
+    {
+        $key = 'entrypoint' . $this->clientId;
+
+        $cache = $this->getCache();
+        if ($cache->has($key)) {
+            $this->log->debug('loading entrypoint from persistent cache');
+            $entrypointResource = $cache->get($key);
+        } else {
+            $this->log->debug('entrypoint not cached, requesting from API');
+            $entrypointResource = $this->get('api');
+            $cache->set($key, $entrypointResource, 86400);
+            $this->log->info('entrypoint loaded from API and cached');
+        }
+
+        return $entrypointResource;
+    }
+
+    /**
+     * @return \Psr\SimpleCache\CacheInterface
+     */
+    public function getCache(): CacheInterface
+    {
+        return $this->cache;
+    }
+
+    /**
+     * Internal helper to provide an OAuth2 capable HTTP client
+     */
+    protected function getClient(): ClientInterface
+    {
+        if (!is_object($this->guzzle)) {
+            $this->guzzle = $this->httpClientFactory->create(
+                $this->apiRoot,
+                $this->clientId,
+                $this->clientSecret,
+                $this->getCache()
             );
         }
 
-        return $entrypoint;
+        return $this->guzzle;
     }
 }

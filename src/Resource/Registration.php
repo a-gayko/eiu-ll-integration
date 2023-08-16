@@ -18,12 +18,12 @@ use stdClass;
 class Registration extends AbstractApiResource
 {
     /**
-     * Get the status of the subscription.
+     * Get the status of the registration.
      *
-     * @return bool|string Status of the subscription.
+     * @return bool|string Status of the registration.
      */
     public function getStatus(): bool | string
     {
-        // TODO: Implement getStatus() method.
+        return isset($this->id);
     }
 }
