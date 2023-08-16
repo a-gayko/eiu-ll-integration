@@ -17,12 +17,14 @@ abstract class AbstractApiRequest implements ApiRequestInterface
 {
     /**
      * Client for making API requests.
+     *
      * @var Client
      */
     protected Client $client;
 
     /**
      * Logger for logging messages.
+     *
      * @var LoggerInterface
      */
     protected LoggerInterface $log;
@@ -33,7 +35,7 @@ abstract class AbstractApiRequest implements ApiRequestInterface
     public function __construct()
     {
         $this->client = new Client();
-        $this->log = new NullLogger();
+        $this->log    = new NullLogger();
     }
 
     /**
@@ -59,6 +61,7 @@ abstract class AbstractApiRequest implements ApiRequestInterface
      * Create an API resource from the response data.
      *
      * @param mixed $response Response data.
+     *
      * @return ApiResourceInterface Created API resource.
      */
     abstract protected function createResource(mixed $response): ApiResourceInterface;
@@ -74,9 +77,12 @@ abstract class AbstractApiRequest implements ApiRequestInterface
      * Get the log context for a successful request.
      *
      * @param ApiResourceInterface $resource Created API resource.
+     *
      * @return array Log context.
      */
-    abstract protected function getSuccessLogContext(ApiResourceInterface $resource): array;
+    abstract protected function getSuccessLogContext(
+        ApiResourceInterface $resource
+    ): array;
 
     /**
      * {@inheritdoc}
@@ -85,19 +91,32 @@ abstract class AbstractApiRequest implements ApiRequestInterface
     {
         try {
             $payload = $this->getRequestDataJSON();
-            $response = $this->client->apiPOST($this->getApiEndpoint(), $payload);
+            $response = $this->client->apiPOST(
+                $this->getApiEndpoint(),
+                $payload
+            );
 
             if (!isset($response->id)) {
-                $this->log->critical($this->getLogMessage(), ['payload' => $payload]);
+                $this->log->critical(
+                    $this->getLogMessage(),
+                    ['payload' => $payload]
+                );
+
                 return null;
             }
 
             $resource = $this->createResource($response);
-            $this->log->info($this->getSuccessLogMessage(), $this->getSuccessLogContext($resource));
+            $this->log->info(
+                $this->getSuccessLogMessage(),
+                $this->getSuccessLogContext($resource)
+            );
 
             return $resource;
         } catch (\Exception $e) {
-            $this->log->error('Request failed with exception: ' . $e->getMessage());
+            $this->log->error(
+                'Request failed with exception: ' . $e->getMessage()
+            );
+
             return null;
         }
     }

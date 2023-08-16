@@ -9,6 +9,7 @@ use EIU\LLIntegration\Resource\Subscription;
 
 /**
  * Class SubscriptionRequest
+ *
  * @package EIU\LLIntegration\RequestResource
  */
 class SubscriptionRequest extends AbstractApiRequest
@@ -19,12 +20,12 @@ class SubscriptionRequest extends AbstractApiRequest
     public function getRequestDataJSON(): string
     {
         $data = [
-            'title' => $_POST['llsub_title'],
+            'title'        => $_POST['llsub_title'],
             'package_code' => $_POST['llsub_package_code'],
-            'trial' => false,
-            'perpetual' => true,
-            'start' => $_POST['llsub_start'],
-            'end' => $_POST['llsub_end'],
+            'trial'        => false,
+            'perpetual'    => true,
+            'start'        => $_POST['llsub_start'],
+            'end'          => $_POST['llsub_end'],
         ];
 
         return json_encode($data);
@@ -68,8 +69,8 @@ class SubscriptionRequest extends AbstractApiRequest
     protected function getSuccessLogContext(ApiResourceInterface $resource): array
     {
         return [
-            'id' => $resource->id,
-            'title' => $resource->title,
+            'id'           => $resource->id,
+            'title'        => $resource->title,
             'package_code' => $resource->package_code,
         ];
     }

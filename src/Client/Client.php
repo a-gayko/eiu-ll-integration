@@ -10,7 +10,9 @@ namespace EIU\LLIntegration\Client;
 class Client
 {
     public const TRANSIENT_TOKEN = 'liblynx_token';
+
     public const TRANSIENT_ENTRYPOINT = 'liblynx_entrypoint';
+
     protected string $apiroot;
 
     public function __construct()
@@ -23,18 +25,18 @@ class Client
      */
     protected function newToken()
     {
-        $url = $this->apiroot . '/oauth/v2/token';
+        $url        = $this->apiroot . '/oauth/v2/token';
         $authHeader = 'Basic ' . base64_encode(LIBLYNX_CLIENT_KEY . ':' . LIBLYNX_CLIENT_SECRET);
 
         $response = wp_remote_post(
             $url,
-            array(
+            [
                 'method'   => 'POST',
                 'timeout'  => 15,
                 'blocking' => true,
-                'headers'  => array('Authorization' => $authHeader),
-                'body'     => array('grant_type' => 'client_credentials'),
-            )
+                'headers'  => ['Authorization' => $authHeader],
+                'body'     => ['grant_type' => 'client_credentials'],
+            ]
         );
         if (isset($response['response']['code']) && ($response['response']['code'] == 200)) {
             return json_decode($response['body']);
@@ -57,7 +59,11 @@ class Client
 
         $oauth = $this->newToken();
         if ($oauth) {
-            set_transient(self::TRANSIENT_TOKEN, $oauth->access_token, $oauth->expires_in - 60);
+            set_transient(
+                self::TRANSIENT_TOKEN,
+                $oauth->access_token,
+                $oauth->expires_in - 60
+            );
             $token = $oauth->access_token;
         }
 
@@ -86,23 +92,23 @@ class Client
      */
     protected function callAPI($url, $method = 'GET', $jsonBody = null)
     {
-        $token = $this->getToken();
+        $token   = $this->getToken();
         $authHdr = "Bearer " . $token;
 
         //tranform the $url if shorthand
         $url = $this->transformUrl($url);
 
-        $params = array(
+        $params = [
             'method'   => $method,
             'timeout'  => 15,
             'blocking' => true,
-            'headers'  => array(
+            'headers'  => [
                 'Authorization' => $authHdr,
                 'Accept'        => 'application/json',
-            ),
-        );
+            ],
+        ];
         if (!is_null($jsonBody)) {
-            $params['body'] = $jsonBody;
+            $params['body']                    = $jsonBody;
             $params['headers']['Content-Type'] = 'application/json';
         }
 
@@ -155,10 +161,14 @@ class Client
             return json_decode($json);
         }
 
-        $url = $this->apiroot . '/api';
+        $url        = $this->apiroot . '/api';
         $entrypoint = $this->apiGET($url);
         if ($entrypoint) {
-            set_transient(self::TRANSIENT_ENTRYPOINT, json_encode($entrypoint), 86400);
+            set_transient(
+                self::TRANSIENT_ENTRYPOINT,
+                json_encode($entrypoint),
+                86400
+            );
         }
 
         return $entrypoint;

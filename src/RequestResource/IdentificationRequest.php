@@ -9,6 +9,7 @@ use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 
 /**
  * Class IdentificationRequest
+ *
  * @package EIU\LLIntegration\RequestResource
  */
 class IdentificationRequest extends AbstractApiRequest

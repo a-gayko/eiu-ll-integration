@@ -9,6 +9,7 @@ use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
 
 /**
  * Class AccountRequest
+ *
  * @package EIU\LLIntegration\RequestResource
  */
 class AccountRequest extends AbstractApiRequest

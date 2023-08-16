@@ -12,10 +12,11 @@ use stdClass;
  */
 interface ApiResourceInterface
 {
+
     /**
      * Get the status of the API resource.
      *
-     * @return stdClass Status of the API resource.
+     * @return bool|string Status of the API resource.
      */
-    public function getStatus(): stdClass;
+    public function getStatus(): bool | string;
 }

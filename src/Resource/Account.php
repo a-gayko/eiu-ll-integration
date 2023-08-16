@@ -8,6 +8,7 @@ use stdClass;
 
 /**
  * Provides a simple wrapper around a LibLynx identification resource
+ *
  * @package EIU\LLIntegration
  *
  * @property stdClass $id
@@ -19,10 +20,10 @@ class Account extends AbstractApiResource
     /**
      * Get the status of the subscription.
      *
-     * @return stdClass Status of the subscription.
+     * @return bool|string Status of the subscription.
      */
-    public function getStatus(): stdClass
+    public function getStatus(): bool | string
     {
-        return $this->active;
+        return $this->active == true;
     }
 }

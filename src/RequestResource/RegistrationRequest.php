@@ -9,6 +9,7 @@ use EIU\LLIntegration\Resource\Registration;
 
 /**
  * Class RegistrationRequest
+ *
  * @package EIU\LLIntegration\RequestResource
  */
 class RegistrationRequest extends AbstractApiRequest
@@ -19,8 +20,8 @@ class RegistrationRequest extends AbstractApiRequest
     public function getRequestDataJSON(): string
     {
         $target_url = $_SERVER['HTTPS'] . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ?? null;
-        $data = [
-            'type' => 'user',
+        $data       = [
+            'type'       => 'user',
             'individual' => [
                 'display_name' => $_POST['llacc_name'],
                 'password'     => $_POST['llacc_password'],
@@ -28,7 +29,7 @@ class RegistrationRequest extends AbstractApiRequest
                     $_POST['ll_email'],
                 ],
             ],
-            'email' => false,
+            'email'      => false,
             'target_url' => $target_url,
         ];
 
@@ -73,8 +74,8 @@ class RegistrationRequest extends AbstractApiRequest
     protected function getSuccessLogContext(ApiResourceInterface $resource): array
     {
         return [
-            'id' => $resource->id,
-            'type' => $resource->type,
+            'id'         => $resource->id,
+            'type'       => $resource->type,
             'individual' => $resource->individual->display_name,
         ];
     }
