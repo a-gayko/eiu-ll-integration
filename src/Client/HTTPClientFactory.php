@@ -83,7 +83,7 @@ class HTTPClientFactory
      *
      * @return \kamermans\OAuth2\OAuth2Middleware
      */
-    protected function createOAuth2Middleware(
+    public function createOAuth2Middleware(
         $apiRoot,
         $id,
         $secret,
@@ -115,7 +115,7 @@ class HTTPClientFactory
      *
      * @return \Kevinrob\GuzzleCache\CacheMiddleware
      */
-    protected function createCacheMiddleware(CacheInterface $cache): CacheMiddleware
+    public function createCacheMiddleware(CacheInterface $cache): CacheMiddleware
     {
         return new CacheMiddleware(
             new PrivateCacheStrategy(
