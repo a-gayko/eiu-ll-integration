@@ -12,7 +12,6 @@ use stdClass;
  */
 interface ApiResourceInterface
 {
-
     /**
      * Get the status of the API resource.
      *

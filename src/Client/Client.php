@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request;
 use LogicException;
+use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -50,12 +51,8 @@ class Client implements LoggerAwareInterface
      */
     public function __construct(HTTPClientFactory $clientFactory = null)
     {
-        if (defined(LIBLYNX_CLIENT_KEY)) {
-            $this->clientId = LIBLYNX_CLIENT_KEY;
-        }
-        if (defined(LIBLYNX_CLIENT_SECRET)) {
-            $this->clientSecret = LIBLYNX_CLIENT_SECRET;
-        }
+        $this->clientId = defined(LIBLYNX_CLIENT_KEY) ? LIBLYNX_CLIENT_KEY : '';
+        $this->clientSecret = defined(LIBLYNX_CLIENT_SECRET) ? LIBLYNX_CLIENT_SECRET : '';
 
         $this->log               = new NullLogger();
         $this->httpClientFactory = $clientFactory ?? new HTTPClientFactory();
@@ -75,12 +72,16 @@ class Client implements LoggerAwareInterface
      * @param string $entrypoint contains either an @entrypoint or full URL
      *     obtained from a resource
      *
-     * @return mixed
+     * @return array
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function apiGET(string $entrypoint): mixed
+    public function apiGET(string $entrypoint): array
     {
-        return $this->makeAPIRequest('GET', $entrypoint);
+//        return $this->makeAPIRequest('GET', $entrypoint);
+        $response = $this->makeAPIRequest('GET', $entrypoint);
+        $contents = $response->getBody()->getContents();
+
+        return json_decode($contents, true);
     }
 
     /**
@@ -88,30 +89,30 @@ class Client implements LoggerAwareInterface
      *
      * @param string $entrypoint contains either an @entrypoint or full URL
      *     obtained from a resource
-     * @param string $json contains JSON formatted data to post
+     * @param string|null $json contains JSON formatted data to post
      *
      * @return \stdClass|string
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function apiPOST(string $entrypoint, string $json): string | \stdClass
+    public function apiPOST(string $entrypoint, ?string $json): StreamInterface
     {
         return $this->makeAPIRequest('POST', $entrypoint, $json);
     }
 
     /**
-     * @param $method
-     * @param $entrypoint
-     * @param null $json
+     * @param string $method
+     * @param string $entrypoint
+     * @param string|null $json
      *
-     * @return string object containing JSON decoded response - note this
+     * @return \Psr\Http\Message\StreamInterface object containing JSON decoded response - note this
      *     can be an error response for normally handled errors
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    protected function makeAPIRequest(
-        $method,
-        $entrypoint,
-        $json = null
-    ): string {
+    public function makeAPIRequest(
+        string $method,
+        string $entrypoint,
+        ?string $json = null
+    ): StreamInterface {
         $this->log->debug(
             '{method} {entry} {json}',
             ['method' => $method, 'entry' => $entrypoint, 'json' => $json]
@@ -164,16 +165,16 @@ class Client implements LoggerAwareInterface
             throw new RuntimeException("$method $entrypoint failed", 0, $e);
         }
 
-        return json_decode($response->getBody());
+        return $response->getBody();
     }
 
     /**
      * @param $nameOrUrl
      *
-     * @return mixed
+     * @return string
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function resolveEntryPoint($nameOrUrl): mixed
+    public function resolveEntryPoint($nameOrUrl): string
     {
         if ($nameOrUrl[0] === '@') {
             $resolved = $this->getEntryPoint($nameOrUrl);
@@ -194,7 +195,7 @@ class Client implements LoggerAwareInterface
      * @return mixed
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function getEntryPoint($name): mixed
+    public function getEntryPoint($name): ?\stdClass
     {
         if (!is_array($this->entrypoint)) {
             $this->entrypoint = $this->getEntrypointResource();
@@ -213,7 +214,7 @@ class Client implements LoggerAwareInterface
      * @return mixed
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    protected function getEntrypointResource(): mixed
+    public function getEntrypointResource(): array
     {
         $key = 'entrypoint' . $this->clientId;
 
@@ -223,7 +224,8 @@ class Client implements LoggerAwareInterface
             $entrypointResource = $cache->get($key);
         } else {
             $this->log->debug('entrypoint not cached, requesting from API');
-            $entrypointResource = $this->get('api');
+            $url = $this->apiRoot . '/api';
+            $entrypointResource = $this->apiGET($url);
             $cache->set($key, $entrypointResource, 86400);
             $this->log->info('entrypoint loaded from API and cached');
         }
@@ -240,9 +242,19 @@ class Client implements LoggerAwareInterface
     }
 
     /**
+     * @param \Psr\SimpleCache\CacheInterface $cache
+     *
+     * @return void
+     */
+    public function setCache(CacheInterface $cache): void
+    {
+        $this->cache = $cache;
+    }
+
+    /**
      * Internal helper to provide an OAuth2 capable HTTP client
      */
-    protected function getClient(): ClientInterface
+    public function getClient(): ClientInterface
     {
         if (!is_object($this->guzzle)) {
             $this->guzzle = $this->httpClientFactory->create(
