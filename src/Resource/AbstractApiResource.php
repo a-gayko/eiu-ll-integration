@@ -10,16 +10,24 @@ use stdClass;
 /**
  * @package EIU\LLIntegration
  *
- * @property stdClass $_links
  */
 abstract class AbstractApiResource implements ApiResourceInterface
 {
     /**
-     * @param $obj
+     * @param mixed $objectResponse
      */
-    public function __construct($obj)
+    public function __construct(public mixed $objectResponse)
     {
-        $vars = get_object_vars($obj);
+        $this->objectResponse = (object)$objectResponse;
+        $this->getFieldFromResponse();
+    }
+
+    /**
+     * @return void
+     */
+    private function getFieldFromResponse(): void
+    {
+        $vars = get_object_vars($this->objectResponse);
         foreach ($vars as $name => $value) {
             $this->$name = $value;
         }

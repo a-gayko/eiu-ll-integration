@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace EIU\LLIntegration\RequestResource;
 
 use EIU\LLIntegration\Resource\Identification;
-use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
+use EIU\LLIntegration\Resource\AbstractApiResource;
 
 /**
  * Class IdentificationRequest
@@ -33,7 +33,7 @@ class IdentificationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getApiEndpoint(): string
+    public function getApiEndpoint(): string
     {
         return '@new_identification';
     }
@@ -41,15 +41,7 @@ class IdentificationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getLogMessage(): string
-    {
-        return 'Identification request failed {payload}';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function createResource(mixed $response): ApiResourceInterface
+    public function createResource(mixed $response): AbstractApiResource
     {
         return new Identification($response);
     }
@@ -57,7 +49,15 @@ class IdentificationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getSuccessLogMessage(): string
+    public function getFailLogMessage(): string
+    {
+        return 'Identification request failed {payload}';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSuccessLogMessage(): string
     {
         return 'Identification request for ip {ip} on URL {url} succeeded status={status} id={id}';
     }
@@ -65,7 +65,7 @@ class IdentificationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getSuccessLogContext(ApiResourceInterface $resource): array
+    public function getSuccessLogContext(AbstractApiResource $resource): array
     {
         return [
             'status' => $resource->status,

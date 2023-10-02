@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration\Resource;
 
-use EIU\LLIntegration\RequestResource\IdentificationRequest;
 use stdClass;
 
 /**
@@ -26,16 +25,10 @@ class Identification extends AbstractApiResource
      */
     public function getStatus(): bool | string
     {
-        $status = '';
-        switch ($this->status) {
-            case 'identified':
-                $status = 'identified';
-                break;
-            case 'wayf':
-                $status = 'wayf';
-                break;
-        }
-
-        return $status;
+        return match ($this->status) {
+            'identified' => 'identified',
+            'wayf' => 'wayf',
+            default => 'error',
+        };
     }
 }

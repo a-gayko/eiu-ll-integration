@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration\RequestResource;
 
-use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
+use EIU\LLIntegration\Resource\AbstractApiResource;
 use EIU\LLIntegration\Resource\Subscription;
 
 /**
@@ -23,7 +23,7 @@ class SubscriptionRequest extends AbstractApiRequest
             'title'        => $_POST['llsub_title'],
             'package_code' => $_POST['llsub_package_code'],
             'trial'        => false,
-            'perpetual'    => true,
+            'perpetual'    => false,
             'start'        => $_POST['llsub_start'],
             'end'          => $_POST['llsub_end'],
         ];
@@ -34,7 +34,7 @@ class SubscriptionRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getApiEndpoint(): string
+    public function getApiEndpoint(): string
     {
         return '@account_subs';
     }
@@ -42,15 +42,7 @@ class SubscriptionRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getLogMessage(): string
-    {
-        return 'Subscription request failed {payload}';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function createResource(mixed $response): ApiResourceInterface
+    public function createResource(mixed $response): AbstractApiResource
     {
         return new Subscription($response);
     }
@@ -58,7 +50,15 @@ class SubscriptionRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getSuccessLogMessage(): string
+    public function getFailLogMessage(): string
+    {
+        return 'Subscription request failed {payload}';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSuccessLogMessage(): string
     {
         return 'Subscription request for title {title} succeeded id={id} package_code={package_code}';
     }
@@ -66,12 +66,13 @@ class SubscriptionRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getSuccessLogContext(ApiResourceInterface $resource): array
+    public function getSuccessLogContext(AbstractApiResource $resource): array
     {
         return [
             'id'           => $resource->id,
             'title'        => $resource->title,
             'package_code' => $resource->package_code,
+            'active'     => $resource->active,
         ];
     }
 }

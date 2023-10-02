@@ -65,7 +65,6 @@ class HTTPClientFactory
         ));
         $handlerStack->push($this->createCacheMiddleware($cache), 'cache');
 
-        //now we can make our client
         $client = new GuzzleClient([
             'handler'  => $handlerStack,
             'auth'     => 'oauth',

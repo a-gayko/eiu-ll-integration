@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration\Client;
 
+use EIU\LLIntegration\RequestResource\AbstractApiRequest;
+use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
+use Exception;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -15,6 +18,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Psr\SimpleCache\CacheInterface;
 use RuntimeException;
+use stdClass;
 
 /**
  * LibLynx Integration API client
@@ -25,37 +29,29 @@ class Client implements LoggerAwareInterface
 {
     private string $apiRoot = 'https://connect.liblynx.com';
 
-    /** @var string client ID obtain from LibLynx Connect admin portal */
-    private string $clientId;
-
-    /** @var string client secret obtain from LibLynx Connect admin portal */
-    private string $clientSecret;
-
     /** @var ClientInterface HTTP client for API requests */
     private ClientInterface $guzzle;
 
-    /** @var \stdClass entry point resource */
-    private \stdClass $entrypoint;
+    /** @var stdClass entry point resource */
+    private stdClass $entrypoint;
 
     /** @var CacheInterface */
     protected CacheInterface $cache;
 
-    /** @var LoggerInterface */
-    protected LoggerInterface $log;
-
-    /** @var HTTPClientFactory */
-    protected HTTPClientFactory $httpClientFactory;
-
     /**
      * Create new LibLynx Integration API client
+     *
+     * @param string $clientId
+     * @param string $clientSecret
+     * @param \Psr\Log\NullLogger $log
+     * @param \EIU\LLIntegration\Client\HTTPClientFactory $clientFactory
      */
-    public function __construct(HTTPClientFactory $clientFactory = null)
-    {
-        $this->clientId = defined(LIBLYNX_CLIENT_KEY) ? LIBLYNX_CLIENT_KEY : '';
-        $this->clientSecret = defined(LIBLYNX_CLIENT_SECRET) ? LIBLYNX_CLIENT_SECRET : '';
-
-        $this->log               = new NullLogger();
-        $this->httpClientFactory = $clientFactory ?? new HTTPClientFactory();
+    public function __construct(
+        private readonly string $clientId,
+        private readonly string $clientSecret,
+        protected HTTPClientFactory $clientFactory = new HTTPClientFactory(),
+        protected NullLogger $log = new NullLogger(),
+    ) {
     }
 
     /**
@@ -64,6 +60,37 @@ class Client implements LoggerAwareInterface
     public function setLogger(LoggerInterface $logger): void
     {
         $this->log = $logger;
+    }
+
+    /**
+     * Send the API request and process the response.
+     *
+     * @return ApiResourceInterface|null API resource or null on failure.
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    public function sendRequest(AbstractApiRequest $request): ?ApiResourceInterface
+    {
+        $payload = $request->getRequestDataJSON();
+        try {
+            $response = $this->apiPOST(
+                $request->getApiEndpoint(),
+                $payload
+            );
+            $resource = $request->createResource($response);
+            $this->log->info(
+                $request->getSuccessLogMessage(),
+                $request->getSuccessLogContext($resource)
+            );
+
+            return $resource;
+        } catch (Exception $e) {
+            $this->log->error(
+                $request->getFailLogMessage() . ': ' . $e->getMessage(),
+                ['payload' => $payload]
+            );
+
+            return null;
+        }
     }
 
     /**
@@ -77,7 +104,6 @@ class Client implements LoggerAwareInterface
      */
     public function apiGET(string $entrypoint): array
     {
-//        return $this->makeAPIRequest('GET', $entrypoint);
         $response = $this->makeAPIRequest('GET', $entrypoint);
         $contents = $response->getBody()->getContents();
 
@@ -91,7 +117,7 @@ class Client implements LoggerAwareInterface
      *     obtained from a resource
      * @param string|null $json contains JSON formatted data to post
      *
-     * @return \stdClass|string
+     * @return \Psr\Http\Message\StreamInterface
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
     public function apiPOST(string $entrypoint, ?string $json): StreamInterface
@@ -104,8 +130,9 @@ class Client implements LoggerAwareInterface
      * @param string $entrypoint
      * @param string|null $json
      *
-     * @return \Psr\Http\Message\StreamInterface object containing JSON decoded response - note this
-     *     can be an error response for normally handled errors
+     * @return \Psr\Http\Message\StreamInterface object containing JSON decoded
+     *     response - note this can be an error response for normally handled
+     *     errors
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
     public function makeAPIRequest(
@@ -138,7 +165,6 @@ class Client implements LoggerAwareInterface
                 ]
             );
         } catch (RequestException $e) {
-            //we usually have a response available, but it's not guaranteed
             $response = $e->getResponse();
             $this->log->error(
                 '{method} {entrypoint} {json} failed ({status}): {body}',
@@ -169,12 +195,12 @@ class Client implements LoggerAwareInterface
     }
 
     /**
-     * @param $nameOrUrl
+     * @param string $nameOrUrl
      *
      * @return string
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function resolveEntryPoint($nameOrUrl): string
+    public function resolveEntryPoint(string $nameOrUrl): string
     {
         if ($nameOrUrl[0] === '@') {
             $resolved = $this->getEntryPoint($nameOrUrl);
@@ -190,12 +216,12 @@ class Client implements LoggerAwareInterface
     }
 
     /**
-     * @param $name
+     * @param string $name
      *
-     * @return mixed
+     * @return string
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function getEntryPoint($name): ?\stdClass
+    public function getEntryPoint(string $name): string
     {
         if (!is_array($this->entrypoint)) {
             $this->entrypoint = $this->getEntrypointResource();
@@ -224,7 +250,7 @@ class Client implements LoggerAwareInterface
             $entrypointResource = $cache->get($key);
         } else {
             $this->log->debug('entrypoint not cached, requesting from API');
-            $url = $this->apiRoot . '/api';
+            $url                = $this->apiRoot . '/api';
             $entrypointResource = $this->apiGET($url);
             $cache->set($key, $entrypointResource, 86400);
             $this->log->info('entrypoint loaded from API and cached');
@@ -257,7 +283,7 @@ class Client implements LoggerAwareInterface
     public function getClient(): ClientInterface
     {
         if (!is_object($this->guzzle)) {
-            $this->guzzle = $this->httpClientFactory->create(
+            $this->guzzle = $this->clientFactory->create(
                 $this->apiRoot,
                 $this->clientId,
                 $this->clientSecret,

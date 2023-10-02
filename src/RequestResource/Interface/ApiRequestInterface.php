@@ -21,9 +21,18 @@ interface ApiRequestInterface
     public function getRequestDataJSON(): string;
 
     /**
-     * Send the API request and process the response.
+     * Get the API endpoint for the request.
      *
-     * @return ApiResourceInterface|null API resource or null on failure.
+     * @return string API endpoint.
      */
-    public function sendRequest(): ?ApiResourceInterface;
+    public function getApiEndpoint(): string;
+
+    /**
+     * Create an API resource from the response data.
+     *
+     * @param mixed $response Response data.
+     *
+     * @return ApiResourceInterface Created API resource.
+     */
+    public function createResource(mixed $response): ApiResourceInterface;
 }

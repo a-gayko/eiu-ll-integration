@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EIU\LLIntegration\RequestResource;
 
-use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
+use EIU\LLIntegration\Resource\AbstractApiResource;
 use EIU\LLIntegration\Resource\Registration;
 
 /**
@@ -39,7 +39,7 @@ class RegistrationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getApiEndpoint(): string
+    public function getApiEndpoint(): string
     {
         return '@account_individuals';
     }
@@ -47,15 +47,7 @@ class RegistrationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getLogMessage(): string
-    {
-        return 'Registration request failed {payload}';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function createResource(mixed $response): ApiResourceInterface
+    public function createResource(mixed $response): AbstractApiResource
     {
         return new Registration($response);
     }
@@ -63,7 +55,15 @@ class RegistrationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getSuccessLogMessage(): string
+    public function getFailLogMessage(): string
+    {
+        return 'Registration request failed {payload}';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSuccessLogMessage(): string
     {
         return 'Registration request for display_name {display_name} succeeded id={id} type={type}';
     }
@@ -71,7 +71,7 @@ class RegistrationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    protected function getSuccessLogContext(ApiResourceInterface $resource): array
+    public function getSuccessLogContext(AbstractApiResource $resource): array
     {
         return [
             'id'         => $resource->id,

@@ -2,10 +2,9 @@
 
 namespace EIU\LLIntegration\RequestResource;
 
-use EIU\LLIntegration\Client\Client;
 use EIU\LLIntegration\RequestResource\Interface\ApiRequestInterface;
+use EIU\LLIntegration\Resource\AbstractApiResource;
 use EIU\LLIntegration\Resource\Interface\ApiResourceInterface;
-use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
@@ -16,62 +15,28 @@ use Psr\Log\NullLogger;
 abstract class AbstractApiRequest implements ApiRequestInterface
 {
     /**
-     * Client for making API requests.
-     *
-     * @var Client
-     */
-    protected Client $client;
-
-    /**
-     * Logger for logging messages.
-     *
-     * @var LoggerInterface
-     */
-    protected LoggerInterface $log;
-
-    /**
      * AbstractApiRequest constructor.
-     */
-    public function __construct()
-    {
-        $this->client = new Client();
-        $this->log    = new NullLogger();
-    }
-
-    /**
-     * @return string
-     */
-    abstract public function getRequestDataJSON(): string;
-
-    /**
-     * Get the API endpoint for the request.
      *
-     * @return string API endpoint.
+     * @param \Psr\Log\NullLogger $log
      */
-    abstract protected function getApiEndpoint(): string;
+    public function __construct(
+        NullLogger $log = new NullLogger()
+    ) {
+    }
 
     /**
      * Get the log message for a failed request.
      *
      * @return string Log message.
      */
-    abstract protected function getLogMessage(): string;
-
-    /**
-     * Create an API resource from the response data.
-     *
-     * @param mixed $response Response data.
-     *
-     * @return ApiResourceInterface Created API resource.
-     */
-    abstract protected function createResource(mixed $response): ApiResourceInterface;
+    abstract public function getFailLogMessage(): string;
 
     /**
      * Get the log message for a successful request.
      *
      * @return string Log message.
      */
-    abstract protected function getSuccessLogMessage(): string;
+    abstract public function getSuccessLogMessage(): string;
 
     /**
      * Get the log context for a successful request.
@@ -80,44 +45,5 @@ abstract class AbstractApiRequest implements ApiRequestInterface
      *
      * @return array Log context.
      */
-    abstract protected function getSuccessLogContext(
-        ApiResourceInterface $resource
-    ): array;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function sendRequest(): ?ApiResourceInterface
-    {
-        try {
-            $payload = $this->getRequestDataJSON();
-            $response = $this->client->apiPOST(
-                $this->getApiEndpoint(),
-                $payload
-            );
-
-            if (!isset($response->id)) {
-                $this->log->critical(
-                    $this->getLogMessage(),
-                    ['payload' => $payload]
-                );
-
-                return null;
-            }
-
-            $resource = $this->createResource($response);
-            $this->log->info(
-                $this->getSuccessLogMessage(),
-                $this->getSuccessLogContext($resource)
-            );
-
-            return $resource;
-        } catch (\Exception $e) {
-            $this->log->error(
-                'Request failed with exception: ' . $e->getMessage()
-            );
-
-            return null;
-        }
-    }
+    abstract public function getSuccessLogContext(AbstractApiResource $resource): array;
 }
