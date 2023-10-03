@@ -18,7 +18,7 @@ interface ApiRequestInterface
      *
      * @return string JSON representation of the request data.
      */
-    public function getRequestDataJSON(): string;
+    public static function getRequestDataJSON(): string;
 
     /**
      * Get the API endpoint for the request.

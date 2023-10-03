@@ -18,9 +18,9 @@ class AccountRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    public function getRequestDataJSON(): string
+    public static function getRequestDataJSON(): string
     {
-        $data = [
+        $userData = [
             'account_name'        => $_POST['llacc_name'],
             'publisher_reference' => '',
             'enable_ip'           => true,
@@ -29,7 +29,7 @@ class AccountRequest extends AbstractApiRequest
             'enable_individual'   => true,
         ];
 
-        return json_encode($data);
+        return json_encode($userData);
     }
 
     /**

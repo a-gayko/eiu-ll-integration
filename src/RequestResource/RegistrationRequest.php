@@ -17,10 +17,10 @@ class RegistrationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    public function getRequestDataJSON(): string
+    public static function getRequestDataJSON(): string
     {
-        $target_url = $_SERVER['HTTPS'] . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ?? null;
-        $data       = [
+        $target_url = $_REQUEST['_wp_http_referer'] ?? $_SERVER['REQUEST_URI'];
+        $userData   = [
             'type'       => 'user',
             'individual' => [
                 'display_name' => $_POST['llacc_name'],
@@ -33,7 +33,7 @@ class RegistrationRequest extends AbstractApiRequest
             'target_url' => $target_url,
         ];
 
-        return json_encode($data);
+        return json_encode($userData);
     }
 
     /**

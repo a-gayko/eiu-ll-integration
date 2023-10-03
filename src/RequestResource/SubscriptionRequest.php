@@ -17,9 +17,9 @@ class SubscriptionRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    public function getRequestDataJSON(): string
+    public static function getRequestDataJSON(): string
     {
-        $data = [
+        $userData = [
             'title'        => $_POST['llsub_title'],
             'package_code' => $_POST['llsub_package_code'],
             'trial'        => false,
@@ -28,7 +28,7 @@ class SubscriptionRequest extends AbstractApiRequest
             'end'          => $_POST['llsub_end'],
         ];
 
-        return json_encode($data);
+        return json_encode($userData);
     }
 
     /**

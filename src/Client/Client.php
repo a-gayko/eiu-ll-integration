@@ -70,7 +70,7 @@ class Client implements LoggerAwareInterface
      */
     public function sendRequest(AbstractApiRequest $request): ?ApiResourceInterface
     {
-        $payload = $request->getRequestDataJSON();
+        $payload = ApiRequestInterface::getRequestDataJSON();
         try {
             $response = $this->apiPOST(
                 $request->getApiEndpoint(),

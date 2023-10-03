@@ -17,7 +17,7 @@ class IdentificationRequest extends AbstractApiRequest
     /**
      * {@inheritdoc}
      */
-    public function getRequestDataJSON(): string
+    public static function getRequestDataJSON(): string
     {
         $data = [
             'ip'            => $_SERVER['REMOTE_ADDR'] ?? null,
